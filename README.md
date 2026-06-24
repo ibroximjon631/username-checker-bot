@@ -263,6 +263,9 @@ ADMIN_IDS=123456789                   # admin Telegram ID'lari (vergul bilan)
 
 ## 10. Ishga tushirish
 
+> 🚀 **Serverga deploy:** to'liq yo'riqnoma — [DEPLOY.md](DEPLOY.md) (Docker yoki systemd).
+> 🧪 **Testlar:** `python -m tests.test_all` — 26 ta tekshiruv (storage, checker, access, UI, error handler...).
+
 ### Lokal
 ```bash
 python bot.py
