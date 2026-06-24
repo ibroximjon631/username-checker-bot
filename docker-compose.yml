@@ -1,0 +1,10 @@
+services:
+  bot:
+    build: .
+    container_name: username_checker_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Ma'lumotlar bazasi va telethon sessiyasi konteyner o'chsa ham saqlanadi
+      - ./data:/data

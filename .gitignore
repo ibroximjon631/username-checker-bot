@@ -1,0 +1,25 @@
+# Maxfiy kalitlar
+.env
+*.session
+*.session-journal
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Ma'lumotlar bazasi
+*.db
+*.sqlite3
+
+# Loglar
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+
+# Test ma'lumotlari
+data/
