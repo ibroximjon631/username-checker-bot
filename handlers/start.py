@@ -41,7 +41,8 @@ async def cmd_start(message: Message, lang: str, bot: Bot) -> None:
     if user.id in settings.admin_id_list:
         if prev_status != "approved":
             await storage.set_status(user.id, "approved")
-        await message.answer(t(lang, "START", name=name))
+        await message.answer(t(lang, "START", name=name),
+                             reply_markup=keyboards.start_keyboard(lang))
         return
 
     if prev_status is None:
@@ -50,7 +51,8 @@ async def cmd_start(message: Message, lang: str, bot: Bot) -> None:
         await _notify_admins(bot, user)
         logger.info(f"Yangi ruxsat so'rovi: {user.id} (@{user.username})")
     elif prev_status == "approved":
-        await message.answer(t(lang, "START", name=name))
+        await message.answer(t(lang, "START", name=name),
+                             reply_markup=keyboards.start_keyboard(lang))
     elif prev_status == "rejected":
         await message.answer(t(lang, "ACCESS_REJECTED"))
     else:  # pending
@@ -60,6 +62,17 @@ async def cmd_start(message: Message, lang: str, bot: Bot) -> None:
 @router.message(Command("help"))
 async def cmd_help(message: Message, lang: str) -> None:
     await message.answer(t(lang, "HELP"))
+
+
+@router.message(Command("webapp"))
+async def cmd_webapp(message: Message, lang: str) -> None:
+    await message.answer(t(lang, "WEBAPP_SOON"))
+
+
+@router.callback_query(F.data == "webapp")
+async def cb_webapp(call: CallbackQuery, lang: str) -> None:
+    await call.answer()
+    await call.message.answer(t(lang, "WEBAPP_SOON"))
 
 
 @router.message(Command("lang"))

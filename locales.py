@@ -28,6 +28,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "/watch &lt;username&gt; — kuzatish (bo'shasa xabar)\n"
             "/list — kuzatuv ro'yxati\n"
             "/history — oxirgi tekshiruvlar\n"
+            "/webapp — web ilova (tez orada) 🌐\n"
             "/lang — tilni o'zgartirish\n"
             "/help — yordam"
         ),
@@ -103,6 +104,14 @@ TEXTS: dict[str, dict[str, str]] = {
         "BROADCAST_DONE": "✅ Yuborildi: <b>{ok}</b> / {total}\n❌ Yetib bormadi: {failed}",
         "LANG_CHOOSE": "🌐 Tilni tanlang:",
         "LANG_SET": "✅ Til o'zgartirildi: O'zbekcha",
+        "WEBAPP_SOON": (
+            "🌐 <b>Web ilova — tez orada!</b>\n\n"
+            "Hozir web ilovamiz ustida ishlayapmiz 🛠\n"
+            "Yaqinda username'larni qulay web interfeysdan — brauzer va telefondan — "
+            "tekshira olasiz.\n\n"
+            "⏳ <i>Deyarli tayyor. Kuzatib boring!</i> 🚀"
+        ),
+        "BTN_WEBAPP": "🌐 Web ilova (tez orada)",
         "BTN_OPEN": "🔗 Telegramda ochish",
         "BTN_WATCH": "👁 Kuzatuvga qo'shish",
         "BTN_UNWATCH": "🗑 Kuzatuvdan olish",
@@ -181,6 +190,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "/watch &lt;username&gt; — следить (уведомлю когда освободится)\n"
             "/list — список слежения\n"
             "/history — последние проверки\n"
+            "/webapp — веб-приложение (скоро) 🌐\n"
             "/lang — сменить язык\n"
             "/help — помощь"
         ),
@@ -255,6 +265,14 @@ TEXTS: dict[str, dict[str, str]] = {
         "BROADCAST_DONE": "✅ Отправлено: <b>{ok}</b> / {total}\n❌ Не дошло: {failed}",
         "LANG_CHOOSE": "🌐 Выберите язык:",
         "LANG_SET": "✅ Язык изменён: Русский",
+        "WEBAPP_SOON": (
+            "🌐 <b>Веб-приложение — скоро!</b>\n\n"
+            "Сейчас мы работаем над веб-приложением 🛠\n"
+            "Скоро вы сможете проверять username'ы через удобный веб-интерфейс — "
+            "в браузере и на телефоне.\n\n"
+            "⏳ <i>Почти готово. Следите за обновлениями!</i> 🚀"
+        ),
+        "BTN_WEBAPP": "🌐 Веб-приложение (скоро)",
         "BTN_OPEN": "🔗 Открыть в Telegram",
         "BTN_WATCH": "👁 Следить",
         "BTN_UNWATCH": "🗑 Не следить",
@@ -332,6 +350,7 @@ TEXTS: dict[str, dict[str, str]] = {
             "/watch &lt;username&gt; — watch (notify when it frees up)\n"
             "/list — watchlist\n"
             "/history — recent checks\n"
+            "/webapp — web app (coming soon) 🌐\n"
             "/lang — change language\n"
             "/help — help"
         ),
@@ -406,6 +425,14 @@ TEXTS: dict[str, dict[str, str]] = {
         "BROADCAST_DONE": "✅ Sent: <b>{ok}</b> / {total}\n❌ Failed: {failed}",
         "LANG_CHOOSE": "🌐 Choose your language:",
         "LANG_SET": "✅ Language changed: English",
+        "WEBAPP_SOON": (
+            "🌐 <b>Web app — coming soon!</b>\n\n"
+            "We're currently building our web app 🛠\n"
+            "Soon you'll be able to check usernames from a convenient web interface — "
+            "in your browser and on your phone.\n\n"
+            "⏳ <i>Almost ready. Stay tuned!</i> 🚀"
+        ),
+        "BTN_WEBAPP": "🌐 Web app (coming soon)",
         "BTN_OPEN": "🔗 Open in Telegram",
         "BTN_WATCH": "👁 Watch",
         "BTN_UNWATCH": "🗑 Unwatch",

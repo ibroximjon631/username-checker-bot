@@ -48,6 +48,15 @@ def result_keyboard(
     return kb.as_markup() if has else None
 
 
+def start_keyboard(lang: str) -> InlineKeyboardMarkup:
+    """/start uchun — Web ilova (tez orada) tugmasi."""
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(
+        text=t(lang, "BTN_WEBAPP"), callback_data="webapp",
+    ))
+    return kb.as_markup()
+
+
 def lang_keyboard() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     for code, name in LANG_NAMES.items():

@@ -26,6 +26,7 @@ async def set_commands(bot: Bot) -> None:
         BotCommand(command="unwatch", description="Kuzatuvdan olish"),
         BotCommand(command="list", description="Kuzatuv ro'yxati"),
         BotCommand(command="history", description="Tekshiruvlar tarixi"),
+        BotCommand(command="webapp", description="Web ilova (tez orada) 🌐"),
         BotCommand(command="lang", description="Til / Язык / Language"),
         BotCommand(command="help", description="Yordam"),
     ])
