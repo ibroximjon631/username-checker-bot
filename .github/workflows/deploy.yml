@@ -1,0 +1,44 @@
+name: Deploy to server
+
+# main branchga push bo'lganda avtomatik ishga tushadi
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # qo'lda ham ishga tushirish mumkin
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodni olish
+        uses: actions/checkout@v4
+
+      - name: SSH kalitni sozlash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 178.238.234.230 >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Serverga yuklash (rsync)
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.venv' \
+            --exclude='.env' \
+            --exclude='data' \
+            --exclude='logs' \
+            --exclude='__pycache__' \
+            --exclude='*.db' \
+            --exclude='*.session' \
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            ./ root@178.238.234.230:/opt/username-checker-bot/
+
+      - name: Bog'liqliklar + qayta ishga tushirish
+        run: |
+          ssh -i ~/.ssh/id_ed25519 root@178.238.234.230 \
+            "cd /opt/username-checker-bot && \
+             .venv/bin/pip install -q -r requirements.txt && \
+             systemctl restart username-bot && \
+             sleep 4 && systemctl is-active username-bot"
