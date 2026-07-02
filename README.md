@@ -27,7 +27,7 @@
 - **26 тестов** — `python -m tests.test_all`
 
 ### Инфраструктура
-- **GitHub:** https://github.com/Ibroximjon631/username-checker-bot
+- **GitHub:** https://github.com/ibroximjon631/username-checker-bot
 - **Сервер:** systemd-сервис 24/7 (`/opt/username-checker-bot`), без Docker
 - **Авто-деплой (CI/CD):** `git push` → GitHub Actions → rsync на сервер → перезапуск бота
 - **Docker** тоже доступен (`docker compose`) — как альтернативный способ деплоя
@@ -143,7 +143,7 @@ username-checker-bot/
 ## 🚀 Установка (локально)
 
 ```bash
-git clone git@github.com:Ibroximjon631/username-checker-bot.git
+git clone git@github.com:ibroximjon631/username-checker-bot.git
 cd username-checker-bot
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
@@ -190,7 +190,7 @@ git commit -m "описание изменений"
 git push
 # → за 30-60 секунд сервер обновляется автоматически
 ```
-Статус деплоя: https://github.com/Ibroximjon631/username-checker-bot/actions
+Статус деплоя: https://github.com/ibroximjon631/username-checker-bot/actions
 
 ### Управление на сервере
 ```bash

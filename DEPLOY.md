@@ -23,7 +23,7 @@ curl -fsSL https://get.docker.com | sh
 
 ### 2. Kodni yuklash
 ```bash
-git clone git@github.com:Ibroximjon631/username-checker-bot.git
+git clone git@github.com:ibroximjon631/username-checker-bot.git
 cd username-checker-bot
 ```
 
@@ -66,7 +66,7 @@ Docker ishlatmasangiz.
 
 ### 1. Kod va muhit
 ```bash
-git clone git@github.com:Ibroximjon631/username-checker-bot.git
+git clone git@github.com:ibroximjon631/username-checker-bot.git
 cd username-checker-bot
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
