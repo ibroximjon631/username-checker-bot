@@ -33,6 +33,19 @@ async def _check_watchlist(bot: Bot) -> None:
         if result.status not in ("free", "taken"):
             continue
 
+        # "band → bo'sh" — bu qimmatli o'tish, soxta bo'lmasligi uchun
+        # qayta tasdiqlaymiz. Ikkinchi tekshiruv "free" bermasa, hali
+        # statusni yangilamaymiz (keyingi siklda qayta ko'riladi).
+        if old_status == "taken" and result.status == "free":
+            await asyncio.sleep(2.0)
+            confirm = await check_username(username, use_cache=False)
+            if confirm.status != "free":
+                logger.info(
+                    f"@{username}: 1-tekshiruv 'free', tasdiq '{confirm.status}' "
+                    f"— soxta signal, xabar yuborilmadi"
+                )
+                continue
+
         await storage.update_watch_status(watch_id, result.status)
 
         # Band edi → endi bo'sh bo'ldi: XABAR BER!

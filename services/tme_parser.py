@@ -22,6 +22,11 @@ TAKEN_MARKERS = (
     "tgme_page_extra",      # qo'shimcha ma'lumot (a'zolar soni h.k.)
 )
 
+# Yaroqli t.me sahifasida (band ham, bo'sh ham) doim shu blok bo'ladi.
+# Rate-limit / xato / to'liqsiz javobda bu BO'LMAYDI — o'shanda "free" emas,
+# "unknown" qaytaramiz (aks holda band username soxta "bo'sh" bo'lib ketadi).
+VALID_PAGE_MARKER = "tgme_page_wrap"
+
 
 async def check_tme(username: str) -> str:
     """Username holatini t.me orqali aniqlaydi.
@@ -44,7 +49,17 @@ async def check_tme(username: str) -> str:
         logger.error(f"t.me so'rov xatosi ({username}): {e}")
         return "unknown"
 
-    # Bo'sh username sahifasida profil bloki bo'lmaydi.
+    # Profil bloki bor — aniq band.
     if any(marker in html for marker in TAKEN_MARKERS):
         return "taken"
-    return "free"
+
+    # Profil bloki yo'q. Lekin bu haqiqatan bo'sh sahifami yoki buzuq javobmi?
+    # Yaroqli t.me sahifasi belgisi bo'lsagina "bo'sh" deymiz; aks holda "unknown".
+    if VALID_PAGE_MARKER in html:
+        return "free"
+
+    logger.warning(
+        f"t.me {username}: profil bloki ham, sahifa belgisi ham yo'q "
+        f"(ehtimol rate-limit/buzuq javob) — 'unknown' qaytarildi"
+    )
+    return "unknown"
