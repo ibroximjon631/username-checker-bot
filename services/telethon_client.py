@@ -27,6 +27,14 @@ _last_call = 0.0
 # FloodWait tushsa, shu vaqtgacha Telethon'ni ishlatmaymiz (t.me'ga tushib qolamiz).
 _cooldown_until = 0.0
 
+# --- Egallash (UpdateUsername) uchun alohida backoff ---
+# UpdateUsername'ning flood-limiti QATTIQ. Rezerv/band paytida tez-tez urinsak
+# flood tushadi. Shu bois har urinishdan keyin bir muddat kutamiz:
+#  - occupied (rezerv/band) -> 5 daqiqa (poyga yo'q, shoshilmaymiz)
+#  - flood:N               -> to'liq N soniya (Telegram aytgancha)
+_claim_cooldown_until = 0.0
+_CLAIM_OCCUPIED_BACKOFF = 300.0
+
 
 async def init_telethon() -> None:
     """Botstartupida chaqiriladi. Sozlanmagan bo'lsa hech narsa qilmaydi."""
@@ -148,8 +156,13 @@ async def claim_username_on(
         (False, "flood:N")    — FloodWait N sekund
         (False, "<sabab>")    — boshqa xato
     """
+    global _last_call, _claim_cooldown_until
     if _client is None:
         return False, "telethon o'chiq"
+
+    # Backoff ichidamizmi? (flood/occupied dan keyin) — API'ni bezovta qilmaymiz.
+    if time.monotonic() < _claim_cooldown_until:
+        return False, "cooldown"
 
     from telethon.errors import (
         FloodWaitError,
@@ -160,17 +173,21 @@ async def claim_username_on(
     from telethon.tl.types import InputChannel
 
     channel = InputChannel(channel_id=channel_id, access_hash=access_hash)
-    global _last_call
     async with _lock:
         try:
             await _client(UpdateUsernameRequest(channel=channel, username=username))
             logger.info(f"🤖 Egallandi: @{username} (kanal id={channel_id})")
             return True, f'<a href="https://t.me/{username}">@{username}</a>'
         except UsernameOccupiedError:
+            # Band/rezerv — 5 daqiqa kutamiz (flood keltirib chiqarmaslik uchun).
+            _claim_cooldown_until = time.monotonic() + _CLAIM_OCCUPIED_BACKOFF
             return False, "occupied"
         except UsernameInvalidError:
             return False, "invalid"
         except FloodWaitError as e:
+            # Telegram aytgan vaqtni TO'LIQ kutamiz (hammalamaymiz).
+            _claim_cooldown_until = time.monotonic() + e.seconds + 1
+            logger.warning(f"UpdateUsername FloodWait {e.seconds}s — {e.seconds}s kutiladi")
             return False, f"flood:{e.seconds}"
         except Exception as e:  # noqa: BLE001
             return False, str(e)

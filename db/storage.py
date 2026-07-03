@@ -270,9 +270,14 @@ async def del_state(key: str) -> None:
 
 
 async def all_watches() -> list[aiosqlite.Row]:
-    """Scheduler uchun — barcha kuzatilayotgan yozuvlar."""
+    """Monitoring uchun — faqat ODDIY kuzatuvlar (auto-egallashdagilar emas).
+
+    Auto-egallash yozuvlarini alohida loop (all_auto_claims) boshqaradi;
+    ular monitoringning 'bo'shadi, qo'lda oling' xabarini olmasligi kerak.
+    """
     cur = await _conn().execute(
-        "SELECT id, user_id, target_username, status, free_streak FROM watchlist"
+        "SELECT id, user_id, target_username, status, free_streak FROM watchlist "
+        "WHERE auto_claim = 0"
     )
     return await cur.fetchall()
 

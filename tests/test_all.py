@@ -277,11 +277,158 @@ async def t_errors():
         ok("throttling: takror yuborilmadi")
 
 
+async def _clear_watch_state():
+    await storage._conn().execute("DELETE FROM watchlist")
+    await storage._conn().execute("DELETE FROM bot_state")
+    await storage._conn().commit()
+
+
+async def t_monitoring():
+    print("[13] Monitoring — soxta 'bo'shadi' himoyasi (ko'p-sikl tasdiq)")
+    from types import SimpleNamespace
+    import scheduler
+    from services.checker import CheckResult
+
+    seq: list[str] = []
+
+    async def fake_cu(u, use_cache=False):
+        return CheckResult(username=u, status=seq.pop(0))
+
+    async def nosleep(*a, **k):
+        return None
+
+    real_cu, real_aio = scheduler.check_username, scheduler.asyncio
+    scheduler.check_username = fake_cu
+    scheduler.asyncio = SimpleNamespace(sleep=nosleep)
+    try:
+        await storage.set_lang(5000, "uz")
+
+        # A: bo'sh-blip -> band => soxta xabar YO'Q (throttle bug)
+        await _clear_watch_state()
+        await storage.add_watch(5000, "monx", "taken")
+        bot = FakeBot()
+        seq[:] = ["free"]; await scheduler._check_watchlist(bot)
+        seq[:] = ["taken"]; await scheduler._check_watchlist(bot)
+        assert len(bot.sent) == 0, bot.sent
+        ok("bo'sh-blip -> band: soxta xabar yuborilmadi")
+
+        # B: 2 marta ketma-ket bo'sh => aynan 1 xabar
+        await _clear_watch_state()
+        await storage.add_watch(5000, "mony", "taken")
+        bot = FakeBot()
+        seq[:] = ["free"]; await scheduler._check_watchlist(bot)
+        assert len(bot.sent) == 0
+        seq[:] = ["free"]; await scheduler._check_watchlist(bot)
+        assert len(bot.sent) == 1
+        ok("2 marta bo'sh -> aynan 1 xabar")
+
+        # C: oradagi 'unknown' streak'ni buzmaydi
+        await _clear_watch_state()
+        await storage.add_watch(5000, "monz", "taken")
+        bot = FakeBot()
+        seq[:] = ["free"]; await scheduler._check_watchlist(bot)
+        seq[:] = ["unknown"]; await scheduler._check_watchlist(bot)
+        seq[:] = ["free"]; await scheduler._check_watchlist(bot)
+        assert len(bot.sent) == 1
+        ok("'unknown' streak'ni buzmadi -> 1 xabar")
+    finally:
+        scheduler.check_username = real_cu
+        scheduler.asyncio = real_aio
+        await _clear_watch_state()
+
+
+async def t_autoclaim():
+    print("[14] Auto-egallash — churn/spam/rezerv himoyasi")
+    from types import SimpleNamespace
+    import scheduler
+
+    st = {"ct": [], "claim": (False, "occupied"), "create": 0, "claims": 0}
+
+    async def f_ct(u):
+        return st["ct"].pop(0)
+
+    async def f_create(title="Reserved"):
+        st["create"] += 1
+        return (1000 + st["create"], 7)
+
+    async def f_claim(cid, ch, u):
+        st["claims"] += 1
+        return st["claim"]
+
+    async def nosleep(*a, **k):
+        return None
+
+    real_tc, real_aio = scheduler.telethon_client, scheduler.asyncio
+    scheduler.telethon_client = SimpleNamespace(
+        is_enabled=lambda: True, check_telethon=f_ct,
+        create_holding_channel=f_create, claim_username_on=f_claim,
+    )
+    scheduler.asyncio = SimpleNamespace(sleep=nosleep)
+    try:
+        await storage.set_lang(5001, "uz")
+
+        # D: Telethon 'free' demasa CLAIM urinilmaydi (t.me'ga ishonmaslik)
+        await _clear_watch_state()
+        await storage.add_auto_claim(5001, "acx", "taken")
+        bot = FakeBot()
+        st["ct"] = ["unknown"]; await scheduler._auto_claim_loop(bot)
+        st["ct"] = ["taken"]; await scheduler._auto_claim_loop(bot)
+        assert st["claims"] == 0
+        ok("Telethon 'free' demasa claim urinilmaydi")
+
+        # E: occupied(rezerv) => holding QAYTA ishlatiladi, 1 xabar (churn/spam yo'q)
+        await _clear_watch_state()
+        st["create"] = st["claims"] = 0
+        st["claim"] = (False, "occupied")
+        await storage.add_auto_claim(5001, "ace", "taken")
+        bot = FakeBot()
+        for _ in range(3):
+            st["ct"] = ["free"]; await scheduler._auto_claim_loop(bot)
+        assert st["create"] == 1, st["create"]      # kanal churn yo'q
+        assert st["claims"] == 3                      # qayta urindi
+        assert len(bot.sent) == 1                     # spam yo'q
+        ok("occupied(rezerv): churn yo'q, aynan 1 xabar")
+
+        # F: muvaffaqiyat => claimed + EGALLANDI xabari
+        await _clear_watch_state()
+        st["create"] = st["claims"] = 0
+        st["claim"] = (True, "<a>@z</a>")
+        await storage.add_auto_claim(5001, "acok", "taken")
+        bot = FakeBot()
+        st["ct"] = ["free"]; await scheduler._auto_claim_loop(bot)
+        assert len(bot.sent) == 1 and "EGALLANDI" in bot.sent[0][1]
+        assert any(r["status"] == "claimed" for r in await storage.list_watch(5001))
+        ok("muvaffaqiyat: EGALLANDI + claimed")
+
+        # G: Telethon o'chiq => loop hech narsa qilmaydi
+        await _clear_watch_state()
+        st["create"] = st["claims"] = 0
+        scheduler.telethon_client.is_enabled = lambda: False
+        await storage.add_auto_claim(5001, "acoff", "taken")
+        bot = FakeBot()
+        st["ct"] = ["free"]; await scheduler._auto_claim_loop(bot)
+        assert st["create"] == 0 and st["claims"] == 0
+        ok("Telethon o'chiq: loop no-op")
+
+        # H: monitoring auto-egallash yozuvini KO'RMAYDI (ikki xabar ziddiyati yo'q)
+        await _clear_watch_state()
+        await storage.add_watch(5001, "purewatch", "taken")
+        await storage.add_auto_claim(5001, "achidden", "taken")
+        watches = await storage.all_watches()
+        names = {r["target_username"] for r in watches}
+        assert "achidden" not in names and "purewatch" in names
+        ok("monitoring auto-egallash yozuvini ko'rmaydi")
+    finally:
+        scheduler.telethon_client = real_tc
+        scheduler.asyncio = real_aio
+        await _clear_watch_state()
+
+
 async def main():
     tests = [
         t_locales, t_validator, t_storage, t_checker, t_generator,
         t_fragment, t_limits, t_middlewares, t_flows, t_ui,
-        t_dispatcher, t_errors,
+        t_dispatcher, t_errors, t_monitoring, t_autoclaim,
     ]
     for fn in tests:
         await fn()
