@@ -136,7 +136,8 @@ async def _auto_claim_loop(bot: Bot) -> None:
         lang = await storage.get_lang(user_id)
 
         if ok:
-            await storage.mark_claimed(watch_id)
+            # Egallandi — yozuvni ro'yxatdan butunlay o'chiramiz (qolib ketmasin).
+            await storage.remove_watch_by_id(watch_id)
             try:
                 await bot.send_message(
                     user_id, t(lang, "NOTIFY_CLAIMED", username=username, link=info)

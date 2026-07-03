@@ -397,8 +397,11 @@ async def t_autoclaim():
         bot = FakeBot()
         st["ct"] = ["free"]; await scheduler._auto_claim_loop(bot)
         assert len(bot.sent) == 1 and "EGALLANDI" in bot.sent[0][1]
-        assert any(r["status"] == "claimed" for r in await storage.list_watch(5001))
-        ok("muvaffaqiyat: EGALLANDI + claimed")
+        # Egallangach yozuv ro'yxatdan O'CHIRILADI (qolib ketmasin).
+        assert not any(
+            r["target_username"] == "acok" for r in await storage.list_watch(5001)
+        )
+        ok("muvaffaqiyat: EGALLANDI + ro'yxatdan o'chirildi")
 
         # G: Telethon o'chiq => loop hech narsa qilmaydi
         await _clear_watch_state()

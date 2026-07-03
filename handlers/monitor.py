@@ -89,12 +89,7 @@ async def cmd_list(message: Message, lang: str) -> None:
         return
     lines = [t(lang, "LIST_HEADER")]
     for r in rows:
-        if r["status"] == "claimed":
-            mark = "🤖✅"
-        elif r["status"] == "taken":
-            mark = "❌"
-        else:
-            mark = "✅"
+        mark = "❌" if r["status"] == "taken" else "✅"
         robot = " 🤖" if r["auto_claim"] else ""
         lines.append(f"• {_link(r['target_username'])} — {mark}{robot}")
     await message.answer("\n".join(lines), link_preview_options=_NO_PREVIEW)

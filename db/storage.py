@@ -229,13 +229,9 @@ async def all_auto_claims() -> list[aiosqlite.Row]:
     return await cur.fetchall()
 
 
-async def mark_claimed(watch_id: int) -> None:
-    """Egallandi deb belgilaydi — endi tekshirilmaydi."""
-    await _conn().execute(
-        "UPDATE watchlist SET status = 'claimed', auto_claim = 0, "
-        "last_checked = datetime('now') WHERE id = ?",
-        (watch_id,),
-    )
+async def remove_watch_by_id(watch_id: int) -> None:
+    """Egallangach yozuvni butunlay o'chiradi — ro'yxatda qolmasin."""
+    await _conn().execute("DELETE FROM watchlist WHERE id = ?", (watch_id,))
     await _conn().commit()
 
 
