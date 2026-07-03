@@ -48,6 +48,11 @@ CREATE TABLE IF NOT EXISTS daily_usage (
     count       INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (user_id, day)
 );
+
+CREATE TABLE IF NOT EXISTS bot_state (
+    key    TEXT PRIMARY KEY,
+    value  TEXT
+);
 """
 
 
@@ -86,6 +91,11 @@ async def _migrate() -> None:
             "ALTER TABLE watchlist ADD COLUMN auto_claim INTEGER NOT NULL DEFAULT 0"
         )
         logger.info("Migratsiya: watchlist.auto_claim ustuni qo'shildi")
+    if "claim_notified" not in wcols:
+        await _db.execute(
+            "ALTER TABLE watchlist ADD COLUMN claim_notified INTEGER NOT NULL DEFAULT 0"
+        )
+        logger.info("Migratsiya: watchlist.claim_notified ustuni qo'shildi")
 
 
 async def close_db() -> None:
@@ -213,7 +223,7 @@ async def add_auto_claim(user_id: int, target: str, status: str) -> str:
 async def all_auto_claims() -> list[aiosqlite.Row]:
     """Scheduler uchun — avto-egallash yoqilgan, hali egallanmagan yozuvlar."""
     cur = await _conn().execute(
-        "SELECT id, user_id, target_username, status FROM watchlist "
+        "SELECT id, user_id, target_username, status, claim_notified FROM watchlist "
         "WHERE auto_claim = 1 AND status != 'claimed'"
     )
     return await cur.fetchall()
@@ -226,6 +236,36 @@ async def mark_claimed(watch_id: int) -> None:
         "last_checked = datetime('now') WHERE id = ?",
         (watch_id,),
     )
+    await _conn().commit()
+
+
+async def set_claim_notified(watch_id: int, value: int) -> None:
+    """'Egallab bo'lmadi' xabari bir marta yuborilishi uchun bayroq."""
+    await _conn().execute(
+        "UPDATE watchlist SET claim_notified = ? WHERE id = ?", (value, watch_id)
+    )
+    await _conn().commit()
+
+
+# ---------- bot_state (kalit-qiymat) ----------
+
+async def get_state(key: str) -> str | None:
+    cur = await _conn().execute("SELECT value FROM bot_state WHERE key = ?", (key,))
+    row = await cur.fetchone()
+    return row["value"] if row else None
+
+
+async def set_state(key: str, value: str) -> None:
+    await _conn().execute(
+        "INSERT INTO bot_state (key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value),
+    )
+    await _conn().commit()
+
+
+async def del_state(key: str) -> None:
+    await _conn().execute("DELETE FROM bot_state WHERE key = ?", (key,))
     await _conn().commit()
 
 

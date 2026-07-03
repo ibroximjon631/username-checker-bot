@@ -97,6 +97,11 @@ TEXTS: dict[str, dict[str, str]] = {
             "🤖⚠️ <code>@{username}</code> bo'shadi, lekin avtomatik egallab bo'lmadi "
             "({reason}). Tezda qo'lda urinib ko'ring."
         ),
+        "NOTIFY_CLAIM_WAIT": (
+            "🤖⏳ <code>@{username}</code> bo'shadi, lekin hozircha egallab bo'lmayapti.\n"
+            "Telegram bo'shatilgan username'ni ~25 daqiqa avvalgi egasiga rezerv "
+            "qilib turadi. Kutib turaman — ochilishi bilanoq avtomatik egallayman."
+        ),
         "HISTORY_EMPTY": "📭 Tarix bo'sh. Biror username tekshiring.",
         "HISTORY_HEADER": "🕘 <b>Oxirgi tekshiruvlar:</b>\n\n",
         "GEN_USAGE": (
@@ -272,6 +277,11 @@ TEXTS: dict[str, dict[str, str]] = {
             "🤖⚠️ <code>@{username}</code> освободился, но захватить не удалось "
             "({reason}). Попробуйте вручную скорее."
         ),
+        "NOTIFY_CLAIM_WAIT": (
+            "🤖⏳ <code>@{username}</code> освободился, но пока занять нельзя.\n"
+            "Telegram резервирует освобождённый username за прежним владельцем "
+            "~25 минут. Жду — как только откроется, займу автоматически."
+        ),
         "HISTORY_EMPTY": "📭 История пуста. Проверьте какой-нибудь username.",
         "HISTORY_HEADER": "🕘 <b>Последние проверки:</b>\n\n",
         "GEN_USAGE": (
@@ -445,6 +455,11 @@ TEXTS: dict[str, dict[str, str]] = {
         "NOTIFY_CLAIM_FAILED": (
             "🤖⚠️ <code>@{username}</code> freed up but auto-claim failed "
             "({reason}). Try manually, quickly."
+        ),
+        "NOTIFY_CLAIM_WAIT": (
+            "🤖⏳ <code>@{username}</code> freed up, but can't be claimed yet.\n"
+            "Telegram reserves a freed username for its previous owner for ~25 "
+            "minutes. I'll keep waiting — the moment it opens, I'll grab it."
         ),
         "HISTORY_EMPTY": "📭 History is empty. Check a username first.",
         "HISTORY_HEADER": "🕘 <b>Recent checks:</b>\n\n",

@@ -114,12 +114,39 @@ async def check_telethon(username: str) -> str:
             _last_call = time.monotonic()
 
 
-async def claim_via_new_channel(username: str, title: str = "Reserved") -> tuple[bool, str]:
-    """Bo'shagan username'ni YANGI kanal ochib egallaydi.
+async def create_holding_channel(title: str = "Reserved") -> tuple[int, int] | None:
+    """"Tayyor" bo'sh kanal ochadi (egallash uchun oldindan).
+
+    Returns: (channel_id, access_hash) yoki None (xato).
+    """
+    if _client is None:
+        return None
+    from telethon.tl.functions.channels import CreateChannelRequest
+
+    async with _lock:
+        try:
+            res = await _client(
+                CreateChannelRequest(title=title, about="", megagroup=False)
+            )
+            ch = res.chats[0]
+            logger.info(f"🤖 Tayyor kanal ochildi: id={ch.id}")
+            return ch.id, ch.access_hash
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"Tayyor kanal ochilmadi: {e}")
+            return None
+
+
+async def claim_username_on(
+    channel_id: int, access_hash: int, username: str
+) -> tuple[bool, str]:
+    """Tayyor kanalga username o'rnatib egallaydi (kanal ochib-o'chirmaydi).
 
     Returns:
-        (True, "<kanal linki yoki id>")  — muvaffaqiyat
-        (False, "<xato sababi>")          — poyga yutqazildi / limit / xato
+        (True,  "<link>")     — egallandi
+        (False, "occupied")   — band/rezervda (bo'shatilgandan keyingi kutuv yoki
+                                boshqa birov oldi) — kanal saqlanadi, keyin urinamiz
+        (False, "flood:N")    — FloodWait N sekund
+        (False, "<sabab>")    — boshqa xato
     """
     if _client is None:
         return False, "telethon o'chiq"
@@ -129,52 +156,26 @@ async def claim_via_new_channel(username: str, title: str = "Reserved") -> tuple
         UsernameInvalidError,
         UsernameOccupiedError,
     )
-    from telethon.tl.functions.channels import (
-        CreateChannelRequest,
-        UpdateUsernameRequest,
-    )
+    from telethon.tl.functions.channels import UpdateUsernameRequest
+    from telethon.tl.types import InputChannel
 
+    channel = InputChannel(channel_id=channel_id, access_hash=access_hash)
+    global _last_call
     async with _lock:
         try:
-            res = await _client(
-                CreateChannelRequest(title=title, about="", megagroup=False)
-            )
-            channel = res.chats[0]
-        except FloodWaitError as e:
-            return False, f"FloodWait {e.seconds}s"
-        except Exception as e:  # noqa: BLE001
-            return False, f"kanal ochilmadi: {e}"
-
-        try:
             await _client(UpdateUsernameRequest(channel=channel, username=username))
-            logger.info(f"🤖 Egallandi: @{username} (kanal id={channel.id})")
+            logger.info(f"🤖 Egallandi: @{username} (kanal id={channel_id})")
             return True, f'<a href="https://t.me/{username}">@{username}</a>'
         except UsernameOccupiedError:
-            # Poyga yutqazildi — kanalni tozalab qo'yamiz.
-            await _cleanup_channel(channel)
-            return False, "boshqa birov ilib ketdi"
+            return False, "occupied"
         except UsernameInvalidError:
-            await _cleanup_channel(channel)
-            return False, "username noto'g'ri"
+            return False, "invalid"
         except FloodWaitError as e:
-            await _cleanup_channel(channel)
-            return False, f"FloodWait {e.seconds}s"
+            return False, f"flood:{e.seconds}"
         except Exception as e:  # noqa: BLE001
-            await _cleanup_channel(channel)
             return False, str(e)
         finally:
-            global _last_call
             _last_call = time.monotonic()
-
-
-async def _cleanup_channel(channel) -> None:
-    """Egallash muvaffaqiyatsiz bo'lsa, ochilgan bo'sh kanalni o'chiradi."""
-    try:
-        from telethon.tl.functions.channels import DeleteChannelRequest
-
-        await _client(DeleteChannelRequest(channel=channel))
-    except Exception as e:  # noqa: BLE001
-        logger.warning(f"Bo'sh kanalni o'chirib bo'lmadi: {e}")
 
 
 async def _interactive_login() -> None:
