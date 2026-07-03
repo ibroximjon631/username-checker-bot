@@ -11,6 +11,7 @@ from loguru import logger
 from config import settings
 from db import storage
 from locales import t
+from services import telethon_client
 from services.checker import check_username
 
 # "band → bo'sh" xabari yuborilishidan oldin username shuncha marta KETMA-KET
@@ -79,6 +80,59 @@ async def _check_watchlist(bot: Bot) -> None:
         await asyncio.sleep(1.0)
 
 
+async def _auto_claim_loop(bot: Bot) -> None:
+    """Avto-egallash — bo'shagan username'ni darhol yangi kanal ochib egallaydi.
+
+    Oddiy monitoringdan tezroq (autoclaim_interval_seconds) ishlaydi, chunki
+    poygada birinchi bo'lish muhim. Faqat Telethon yoqilganда ishlaydi.
+    """
+    if not telethon_client.is_enabled():
+        return
+    rows = await storage.all_auto_claims()
+    if not rows:
+        return
+
+    for r in rows:
+        watch_id = r["id"]
+        user_id = r["user_id"]
+        username = r["target_username"]
+
+        result = await check_username(username, use_cache=False)
+        if result.status != "free":
+            # band yoki noaniq — hali vaqti emas.
+            continue
+
+        # Bo'sh! Darhol egallaymiz (egallash o'zi ham "band"ni tekshiradi —
+        # agar poygada yutqazsak, UsernameOccupied qaytadi).
+        ok, info = await telethon_client.claim_via_new_channel(
+            username, settings.autoclaim_channel_title
+        )
+        lang = await storage.get_lang(user_id)
+
+        if ok:
+            await storage.mark_claimed(watch_id)
+            try:
+                await bot.send_message(
+                    user_id, t(lang, "NOTIFY_CLAIMED", username=username, link=info)
+                )
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"Egallandi xabari yuborilmadi ({user_id}): {e}")
+        else:
+            logger.warning(f"@{username} egallab bo'lmadi: {info}")
+            # Poygada yutqazdik (boshqa birov oldi) — foydalanuvchini ogohlantiramiz.
+            # (FloodWait/vaqtincha xatolarда spam qilmaymiz, keyingi siklda urinamiz.)
+            if "ilib ketdi" in info:
+                try:
+                    await bot.send_message(
+                        user_id,
+                        t(lang, "NOTIFY_CLAIM_FAILED", username=username, reason=info),
+                    )
+                except Exception:  # noqa: BLE001
+                    pass
+
+        await asyncio.sleep(1.0)
+
+
 def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
@@ -90,8 +144,18 @@ def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
         max_instances=1,          # oldingisi tugamasa, yangisi boshlanmaydi
         coalesce=True,
     )
+    scheduler.add_job(
+        _auto_claim_loop,
+        trigger="interval",
+        seconds=settings.autoclaim_interval_seconds,
+        args=[bot],
+        id="auto_claim",
+        max_instances=1,
+        coalesce=True,
+    )
     scheduler.start()
     logger.info(
-        f"Scheduler yoqildi — har {settings.check_interval_minutes} daqiqada tekshiradi."
+        f"Scheduler yoqildi — monitoring har {settings.check_interval_minutes} "
+        f"daqiqada, auto-egallash har {settings.autoclaim_interval_seconds}s."
     )
     return scheduler

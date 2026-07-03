@@ -114,6 +114,69 @@ async def check_telethon(username: str) -> str:
             _last_call = time.monotonic()
 
 
+async def claim_via_new_channel(username: str, title: str = "Reserved") -> tuple[bool, str]:
+    """Bo'shagan username'ni YANGI kanal ochib egallaydi.
+
+    Returns:
+        (True, "<kanal linki yoki id>")  — muvaffaqiyat
+        (False, "<xato sababi>")          — poyga yutqazildi / limit / xato
+    """
+    if _client is None:
+        return False, "telethon o'chiq"
+
+    from telethon.errors import (
+        FloodWaitError,
+        UsernameInvalidError,
+        UsernameOccupiedError,
+    )
+    from telethon.tl.functions.channels import (
+        CreateChannelRequest,
+        UpdateUsernameRequest,
+    )
+
+    async with _lock:
+        try:
+            res = await _client(
+                CreateChannelRequest(title=title, about="", megagroup=False)
+            )
+            channel = res.chats[0]
+        except FloodWaitError as e:
+            return False, f"FloodWait {e.seconds}s"
+        except Exception as e:  # noqa: BLE001
+            return False, f"kanal ochilmadi: {e}"
+
+        try:
+            await _client(UpdateUsernameRequest(channel=channel, username=username))
+            logger.info(f"🤖 Egallandi: @{username} (kanal id={channel.id})")
+            return True, f'<a href="https://t.me/{username}">@{username}</a>'
+        except UsernameOccupiedError:
+            # Poyga yutqazildi — kanalni tozalab qo'yamiz.
+            await _cleanup_channel(channel)
+            return False, "boshqa birov ilib ketdi"
+        except UsernameInvalidError:
+            await _cleanup_channel(channel)
+            return False, "username noto'g'ri"
+        except FloodWaitError as e:
+            await _cleanup_channel(channel)
+            return False, f"FloodWait {e.seconds}s"
+        except Exception as e:  # noqa: BLE001
+            await _cleanup_channel(channel)
+            return False, str(e)
+        finally:
+            global _last_call
+            _last_call = time.monotonic()
+
+
+async def _cleanup_channel(channel) -> None:
+    """Egallash muvaffaqiyatsiz bo'lsa, ochilgan bo'sh kanalni o'chiradi."""
+    try:
+        from telethon.tl.functions.channels import DeleteChannelRequest
+
+        await _client(DeleteChannelRequest(channel=channel))
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Bo'sh kanalni o'chirib bo'lmadi: {e}")
+
+
 async def _interactive_login() -> None:
     """Sessiya yaratish uchun bir martalik interaktiv login."""
     from telethon import TelegramClient

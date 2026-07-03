@@ -74,6 +74,29 @@ TEXTS: dict[str, dict[str, str]] = {
             "🎉 <b>BO'SHADI!</b>\n\nSiz kuzatayotgan <code>@{username}</code> endi "
             "<b>bo'sh</b>!\nTezda band qilib oling. ⚡️"
         ),
+        "USAGE_AUTOCLAIM": (
+            "🤖 Foydalanish: <code>/autoclaim username</code>\n\n"
+            "Band username bo'shashi bilanoq avtomatik yangi kanal ochib, "
+            "uni darhol egallab qo'yaman."
+        ),
+        "AUTOCLAIM_ADDED": (
+            "🤖 <b>Avto-egallash yoqildi!</b>\n\n<code>@{username}</code> hozir <b>band</b>. "
+            "Bo'shashi bilanoq avtomatik kanal ochib egallab qo'yaman."
+        ),
+        "AUTOCLAIM_ALREADY": "ℹ️ <code>@{username}</code> allaqachon avto-egallashda.",
+        "AUTOCLAIM_FREE_NOW": (
+            "✅ <code>@{username}</code> hozir <b>bo'sh</b>! Kutishga hojat yo'q — "
+            "o'zingiz band qilib oling."
+        ),
+        "NOTIFY_CLAIMED": (
+            "🤖✅ <b>EGALLANDI!</b>\n\n<code>@{username}</code> bo'shashi bilanoq "
+            "avtomatik egallab qo'ydim.\nU {link} kanalida saqlanmoqda (zaxira "
+            "akkauntda) — endi xavfsiz, hech kim ololmaydi."
+        ),
+        "NOTIFY_CLAIM_FAILED": (
+            "🤖⚠️ <code>@{username}</code> bo'shadi, lekin avtomatik egallab bo'lmadi "
+            "({reason}). Tezda qo'lda urinib ko'ring."
+        ),
         "HISTORY_EMPTY": "📭 Tarix bo'sh. Biror username tekshiring.",
         "HISTORY_HEADER": "🕘 <b>Oxirgi tekshiruvlar:</b>\n\n",
         "GEN_USAGE": (
@@ -226,6 +249,29 @@ TEXTS: dict[str, dict[str, str]] = {
             "🎉 <b>ОСВОБОДИЛСЯ!</b>\n\nОтслеживаемый <code>@{username}</code> теперь "
             "<b>свободен</b>!\nЗанимайте скорее. ⚡️"
         ),
+        "USAGE_AUTOCLAIM": (
+            "🤖 Использование: <code>/autoclaim username</code>\n\n"
+            "Как только занятый username освободится, автоматически создам "
+            "канал и сразу займу его."
+        ),
+        "AUTOCLAIM_ADDED": (
+            "🤖 <b>Авто-захват включён!</b>\n\n<code>@{username}</code> сейчас <b>занят</b>. "
+            "Как только освободится — автоматически создам канал и займу его."
+        ),
+        "AUTOCLAIM_ALREADY": "ℹ️ <code>@{username}</code> уже в авто-захвате.",
+        "AUTOCLAIM_FREE_NOW": (
+            "✅ <code>@{username}</code> уже <b>свободен</b>! Ждать не нужно — "
+            "займите сами."
+        ),
+        "NOTIFY_CLAIMED": (
+            "🤖✅ <b>ЗАХВАЧЕН!</b>\n\n<code>@{username}</code> освободился и я "
+            "автоматически занял его.\nОн сохранён в канале {link} (на резервном "
+            "аккаунте) — теперь никто не заберёт."
+        ),
+        "NOTIFY_CLAIM_FAILED": (
+            "🤖⚠️ <code>@{username}</code> освободился, но захватить не удалось "
+            "({reason}). Попробуйте вручную скорее."
+        ),
         "HISTORY_EMPTY": "📭 История пуста. Проверьте какой-нибудь username.",
         "HISTORY_HEADER": "🕘 <b>Последние проверки:</b>\n\n",
         "GEN_USAGE": (
@@ -376,6 +422,29 @@ TEXTS: dict[str, dict[str, str]] = {
         "NOTIFY_FREE": (
             "🎉 <b>IT'S FREE!</b>\n\nThe username you're watching, <code>@{username}</code>, "
             "is now <b>free</b>!\nGrab it quickly. ⚡️"
+        ),
+        "USAGE_AUTOCLAIM": (
+            "🤖 Usage: <code>/autoclaim username</code>\n\n"
+            "As soon as a taken username frees up, I'll automatically create a "
+            "channel and grab it instantly."
+        ),
+        "AUTOCLAIM_ADDED": (
+            "🤖 <b>Auto-claim enabled!</b>\n\n<code>@{username}</code> is <b>taken</b> now. "
+            "The moment it frees up, I'll auto-create a channel and grab it."
+        ),
+        "AUTOCLAIM_ALREADY": "ℹ️ <code>@{username}</code> is already in auto-claim.",
+        "AUTOCLAIM_FREE_NOW": (
+            "✅ <code>@{username}</code> is <b>free</b> right now! No need to wait — "
+            "grab it yourself."
+        ),
+        "NOTIFY_CLAIMED": (
+            "🤖✅ <b>CLAIMED!</b>\n\n<code>@{username}</code> freed up and I grabbed it "
+            "automatically.\nIt's held on channel {link} (on the backup account) — "
+            "safe now, no one else can take it."
+        ),
+        "NOTIFY_CLAIM_FAILED": (
+            "🤖⚠️ <code>@{username}</code> freed up but auto-claim failed "
+            "({reason}). Try manually, quickly."
         ),
         "HISTORY_EMPTY": "📭 History is empty. Check a username first.",
         "HISTORY_HEADER": "🕘 <b>Recent checks:</b>\n\n",

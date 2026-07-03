@@ -59,6 +59,28 @@ async def cmd_unwatch(message: Message, lang: str) -> None:
     await message.answer(t(lang, key, username=username))
 
 
+@router.message(Command("autoclaim"))
+async def cmd_autoclaim(message: Message, lang: str) -> None:
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) < 2:
+        await message.answer(t(lang, "USAGE_AUTOCLAIM"))
+        return
+    await storage.upsert_user(message.from_user.id, message.from_user.username)
+
+    result = await check_username(parts[1])
+    if result.status == "invalid":
+        await message.answer(t(lang, "WATCH_INVALID", reason=t(lang, result.reason)))
+        return
+    if result.status == "free":
+        # Allaqachon bo'sh — kutish shart emas.
+        await message.answer(t(lang, "AUTOCLAIM_FREE_NOW", username=result.username))
+        return
+
+    outcome = await storage.add_auto_claim(message.from_user.id, result.username, "taken")
+    key = "AUTOCLAIM_ALREADY" if outcome == "already" else "AUTOCLAIM_ADDED"
+    await message.answer(t(lang, key, username=result.username))
+
+
 @router.message(Command("list"))
 async def cmd_list(message: Message, lang: str) -> None:
     rows = await storage.list_watch(message.from_user.id)
@@ -67,8 +89,14 @@ async def cmd_list(message: Message, lang: str) -> None:
         return
     lines = [t(lang, "LIST_HEADER")]
     for r in rows:
-        mark = "❌" if r["status"] == "taken" else "✅"
-        lines.append(f"• {_link(r['target_username'])} — {mark}")
+        if r["status"] == "claimed":
+            mark = "🤖✅"
+        elif r["status"] == "taken":
+            mark = "❌"
+        else:
+            mark = "✅"
+        robot = " 🤖" if r["auto_claim"] else ""
+        lines.append(f"• {_link(r['target_username'])} — {mark}{robot}")
     await message.answer("\n".join(lines), link_preview_options=_NO_PREVIEW)
 
 

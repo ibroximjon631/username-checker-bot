@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
     target_username TEXT NOT NULL,
     status          TEXT NOT NULL DEFAULT 'taken',
     free_streak     INTEGER NOT NULL DEFAULT 0,
+    auto_claim      INTEGER NOT NULL DEFAULT 0,
     added_at        TEXT DEFAULT (datetime('now')),
     last_checked    TEXT,
     UNIQUE(user_id, target_username)
@@ -80,6 +81,11 @@ async def _migrate() -> None:
             "ALTER TABLE watchlist ADD COLUMN free_streak INTEGER NOT NULL DEFAULT 0"
         )
         logger.info("Migratsiya: watchlist.free_streak ustuni qo'shildi")
+    if "auto_claim" not in wcols:
+        await _db.execute(
+            "ALTER TABLE watchlist ADD COLUMN auto_claim INTEGER NOT NULL DEFAULT 0"
+        )
+        logger.info("Migratsiya: watchlist.auto_claim ustuni qo'shildi")
 
 
 async def close_db() -> None:
@@ -166,11 +172,61 @@ async def remove_watch(user_id: int, target: str) -> bool:
 
 async def list_watch(user_id: int) -> list[aiosqlite.Row]:
     cur = await _conn().execute(
-        "SELECT target_username, status FROM watchlist "
+        "SELECT target_username, status, auto_claim FROM watchlist "
         "WHERE user_id = ? ORDER BY added_at DESC",
         (user_id,),
     )
     return await cur.fetchall()
+
+
+async def add_auto_claim(user_id: int, target: str, status: str) -> str:
+    """Username'ni avto-egallashga qo'shadi/yoqadi.
+
+    Returns: 'added' (yangi) | 'enabled' (mavjud edi, yoqildi) | 'already'.
+    """
+    try:
+        await _conn().execute(
+            "INSERT INTO watchlist (user_id, target_username, status, auto_claim) "
+            "VALUES (?, ?, ?, 1)",
+            (user_id, target, status),
+        )
+        await _conn().commit()
+        return "added"
+    except aiosqlite.IntegrityError:
+        cur = await _conn().execute(
+            "SELECT auto_claim FROM watchlist "
+            "WHERE user_id = ? AND target_username = ?",
+            (user_id, target),
+        )
+        row = await cur.fetchone()
+        if row and row["auto_claim"]:
+            return "already"
+        await _conn().execute(
+            "UPDATE watchlist SET auto_claim = 1 "
+            "WHERE user_id = ? AND target_username = ?",
+            (user_id, target),
+        )
+        await _conn().commit()
+        return "enabled"
+
+
+async def all_auto_claims() -> list[aiosqlite.Row]:
+    """Scheduler uchun — avto-egallash yoqilgan, hali egallanmagan yozuvlar."""
+    cur = await _conn().execute(
+        "SELECT id, user_id, target_username, status FROM watchlist "
+        "WHERE auto_claim = 1 AND status != 'claimed'"
+    )
+    return await cur.fetchall()
+
+
+async def mark_claimed(watch_id: int) -> None:
+    """Egallandi deb belgilaydi — endi tekshirilmaydi."""
+    await _conn().execute(
+        "UPDATE watchlist SET status = 'claimed', auto_claim = 0, "
+        "last_checked = datetime('now') WHERE id = ?",
+        (watch_id,),
+    )
+    await _conn().commit()
 
 
 async def all_watches() -> list[aiosqlite.Row]:

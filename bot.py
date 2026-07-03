@@ -23,6 +23,7 @@ async def set_commands(bot: Bot) -> None:
         BotCommand(command="check", description="Username tekshirish"),
         BotCommand(command="gen", description="Bo'sh username topish"),
         BotCommand(command="watch", description="Kuzatuvga qo'shish"),
+        BotCommand(command="autoclaim", description="Bo'shasa avto-egallash 🤖"),
         BotCommand(command="unwatch", description="Kuzatuvdan olish"),
         BotCommand(command="list", description="Kuzatuv ro'yxati"),
         BotCommand(command="history", description="Tekshiruvlar tarixi"),
