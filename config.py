@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # Auto-egallash: bo'shagan username'ni yangi kanal ochib avtomatik egallash.
     # Tekshiruv oralig'i (sekund) — tez bo'lsa poyga imkoni oshadi, lekin FloodWait
     # xavfi ham. Telethon (aniq) bilan 60s xavfsiz va yetarli.
-    autoclaim_interval_seconds: int = 60
+    autoclaim_interval_seconds: int = 30
     autoclaim_channel_title: str = "Reserved"
 
     # Fragment (sotuvdagi username narxini ko'rsatish)
