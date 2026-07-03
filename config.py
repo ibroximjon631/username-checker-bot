@@ -1,4 +1,5 @@
 """Bot konfiguratsiyasi — .env fayldan o'qiladi."""
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,6 +27,14 @@ class Settings(BaseSettings):
 
     # Ma'lumotlar bazasi
     db_path: str = "bot.db"
+
+    @field_validator("api_id", mode="before")
+    @classmethod
+    def _empty_api_id(cls, v):
+        """.env'da API_ID= bo'sh qoldirilsa 0 deb qabul qilamiz (crash bo'lmasin)."""
+        if isinstance(v, str) and not v.strip():
+            return 0
+        return v
 
     @property
     def admin_id_list(self) -> list[int]:
