@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
     user_id         INTEGER NOT NULL,
     target_username TEXT NOT NULL,
     status          TEXT NOT NULL DEFAULT 'taken',
+    free_streak     INTEGER NOT NULL DEFAULT 0,
     added_at        TEXT DEFAULT (datetime('now')),
     last_checked    TEXT,
     UNIQUE(user_id, target_username)
@@ -71,6 +72,14 @@ async def _migrate() -> None:
         # Eski foydalanuvchilar (gate paydo bo'lishidan oldingilar) — tasdiqlangan
         await _db.execute("UPDATE users SET status = 'approved'")
         logger.info("Migratsiya: users.status ustuni qo'shildi (eskilar approved)")
+
+    cur = await _db.execute("PRAGMA table_info(watchlist)")
+    wcols = {row[1] for row in await cur.fetchall()}
+    if "free_streak" not in wcols:
+        await _db.execute(
+            "ALTER TABLE watchlist ADD COLUMN free_streak INTEGER NOT NULL DEFAULT 0"
+        )
+        logger.info("Migratsiya: watchlist.free_streak ustuni qo'shildi")
 
 
 async def close_db() -> None:
@@ -167,15 +176,26 @@ async def list_watch(user_id: int) -> list[aiosqlite.Row]:
 async def all_watches() -> list[aiosqlite.Row]:
     """Scheduler uchun — barcha kuzatilayotgan yozuvlar."""
     cur = await _conn().execute(
-        "SELECT id, user_id, target_username, status FROM watchlist"
+        "SELECT id, user_id, target_username, status, free_streak FROM watchlist"
     )
     return await cur.fetchall()
 
 
-async def update_watch_status(watch_id: int, status: str) -> None:
+async def update_watch_status(watch_id: int, status: str, free_streak: int = 0) -> None:
     await _conn().execute(
-        "UPDATE watchlist SET status = ?, last_checked = datetime('now') WHERE id = ?",
-        (status, watch_id),
+        "UPDATE watchlist SET status = ?, free_streak = ?, "
+        "last_checked = datetime('now') WHERE id = ?",
+        (status, free_streak, watch_id),
+    )
+    await _conn().commit()
+
+
+async def set_free_streak(watch_id: int, free_streak: int) -> None:
+    """Statusni o'zgartirmay, faqat 'bo'sh' tasdiq sanog'ini yangilaydi."""
+    await _conn().execute(
+        "UPDATE watchlist SET free_streak = ?, last_checked = datetime('now') "
+        "WHERE id = ?",
+        (free_streak, watch_id),
     )
     await _conn().commit()
 
